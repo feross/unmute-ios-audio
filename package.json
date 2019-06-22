@@ -1,6 +1,6 @@
 {
   "name": "unmute-ios-audio",
-  "description": "Make Web Audio work while iOS device's mute switch is enabled",
+  "description": "Enable/unmute WebAudio on iOS, even while mute switch is on",
   "version": "2.0.1",
   "author": {
     "name": "Feross Aboukhadijeh",
