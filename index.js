@@ -20,12 +20,6 @@ function init () {
   audio.src = silentAudioFile
   audio.addEventListener('ended', handleAudioEnded)
 
-  const context = new AudioContext()
-  source = context.createBufferSource()
-  source.buffer = context.createBuffer(1, 1, 22050) // .1 sec of silence
-  source.connect(context.destination)
-  source.addEventListener('ended', handleWebAudioEnded)
-
   window.addEventListener('mousedown', handleMousedown)
 }
 
@@ -34,6 +28,11 @@ function handleMousedown () {
     audio.play().catch(() => {})
   }
   if (!isWebAudioEnabled) {
+    const context = new AudioContext()
+    source = context.createBufferSource()
+    source.buffer = context.createBuffer(1, 1, 22050) // .1 sec of silence
+    source.connect(context.destination)
+    source.addEventListener('ended', handleWebAudioEnded)
     source.start()
   }
 }
@@ -42,6 +41,7 @@ function handleAudioEnded () {
   if (isHtmlAudioEnabled) return
   isHtmlAudioEnabled = true
   audio.removeEventListener('ended', handleAudioEnded)
+  audio = null
   maybeCleanup()
 }
 
@@ -49,6 +49,7 @@ function handleWebAudioEnded () {
   if (isWebAudioEnabled) return
   isWebAudioEnabled = true
   source.removeEventListener('ended', handleWebAudioEnded)
+  source = null
   maybeCleanup()
 }
 
