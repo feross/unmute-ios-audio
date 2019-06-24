@@ -31,7 +31,7 @@ function handleMousedown () {
   if (!isWebAudioEnabled) {
     context = new AudioContext()
     source = context.createBufferSource()
-    source.buffer = context.createBuffer(1, 1, 22050) // .1 sec of silence
+    source.buffer = context.createBuffer(1, 1, 22050) // .045 msec of silence
     source.connect(context.destination)
     source.addEventListener('ended', handleWebAudioEnded)
     source.start()
