@@ -53,6 +53,7 @@ function handleWebAudioEnded () {
   source.disconnect(context.destination)
   source = null
   context.close()
+  context = null
   maybeCleanup()
 }
 
