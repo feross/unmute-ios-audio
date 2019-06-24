@@ -12,6 +12,7 @@ let isHtmlAudioEnabled = false
 let isWebAudioEnabled = false
 
 let audio
+let context
 let source
 
 function init () {
@@ -28,7 +29,7 @@ function handleMousedown () {
     audio.play().catch(() => {})
   }
   if (!isWebAudioEnabled) {
-    const context = new AudioContext()
+    context = new AudioContext()
     source = context.createBufferSource()
     source.buffer = context.createBuffer(1, 1, 22050) // .1 sec of silence
     source.connect(context.destination)
@@ -49,7 +50,9 @@ function handleWebAudioEnded () {
   if (isWebAudioEnabled) return
   isWebAudioEnabled = true
   source.removeEventListener('ended', handleWebAudioEnded)
+  source.disconnect(context.destination)
   source = null
+  context.close()
   maybeCleanup()
 }
 
