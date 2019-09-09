@@ -6,8 +6,6 @@ module.exports = init
 
 const AudioContext = window.AudioContext || window.webkitAudioContext
 
-const silentAudioFile = 'data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV'
-
 let isHtmlAudioEnabled = false
 let isWebAudioEnabled = false
 
@@ -15,10 +13,25 @@ let audio
 let context
 let source
 
+// This will return a seven samples long 8 bit mono WAVE file.
+function createSilentAudioFile (context) {
+  const arrayBuffer = new ArrayBuffer(10)
+  const dataView = new DataView(arrayBuffer)
+
+  dataView.setUint32(0, context.sampleRate, true)
+  dataView.setUint32(4, context.sampleRate, true)
+  dataView.setUint16(8, 1, true)
+
+  const missingCharacters = window.btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))).slice(0, 13)
+
+  return `data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEA${missingCharacters}AgAZGF0YQcAAACAgICAgICAAAA=`
+}
+
 function init () {
+  context = new AudioContext()
   audio = document.createElement('audio')
   audio.preload = 'auto'
-  audio.src = silentAudioFile
+  audio.src = createSilentAudioFile(context)
   audio.addEventListener('ended', handleAudioEnded)
 
   window.addEventListener('mousedown', handleMousedown)
@@ -29,7 +42,6 @@ function handleMousedown () {
     audio.play().catch(() => {})
   }
   if (!isWebAudioEnabled) {
-    context = new AudioContext()
     source = context.createBufferSource()
     source.buffer = context.createBuffer(1, 1, 22050) // .045 msec of silence
     source.connect(context.destination)
