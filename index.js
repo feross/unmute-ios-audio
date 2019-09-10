@@ -4,8 +4,6 @@
 
 module.exports = init
 
-const AudioContext = window.AudioContext || window.webkitAudioContext
-
 let isHtmlAudioEnabled = false
 let isWebAudioEnabled = false
 
@@ -28,13 +26,16 @@ function createSilentAudioFile (context) {
 }
 
 function init () {
-  context = new AudioContext()
-  audio = document.createElement('audio')
-  audio.preload = 'auto'
-  audio.src = createSilentAudioFile(context)
-  audio.addEventListener('ended', handleAudioEnded)
+  if (window.webkitAudioContext) {
+    context = new window.webkitAudioContext() // eslint-disable-line new-cap
 
-  window.addEventListener('mousedown', handleMousedown)
+    audio = document.createElement('audio')
+    audio.preload = 'auto'
+    audio.src = createSilentAudioFile(context)
+    audio.addEventListener('ended', handleAudioEnded)
+
+    window.addEventListener('mousedown', handleMousedown)
+  }
 }
 
 function handleMousedown () {
