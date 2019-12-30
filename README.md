@@ -40,6 +40,13 @@ Enable/unmute the WebAudio API on iOS, even while the mute switch is on.
 
 Call this function as early as possible so that the user event handlers can be registered and you don't miss any user interactions which could have been used to unmnute the audio.
 
+## thanks
+
+The techniques used within this package were inspired by:
+
+  - [howler.js issue 753](https://github.com/goldfire/howler.js/issues/753)
+  - [iOS WebAudio only works on headphones](https://stackoverflow.com/questions/21122418/ios-webaudio-only-works-on-headphones/46839941#46839941)
+
 ## license
 
 MIT. Copyright (c) [Feross Aboukhadijeh](https://feross.org).
