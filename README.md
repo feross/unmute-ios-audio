@@ -13,7 +13,7 @@
 
 On Safari for iOS, audio is allowed to play when the device's mute switch is enabled, but only for HTML5 audio tags, and not for Web Audio. This module fixes that and adds consistency and reliability to web audio in Safari. Note that a "user activation" in the form of a `click` or `touchstart` event is still required to play audio. This package merely unmutes Web Audio even while the mute switch is enabled on the device.
 
-This package works by playing a short, silent sound using an `<audio>` tag whenever the user interacts with the page. That's it.
+This package works by playing a short, silent sound using an `<audio>` tag and an `AudioContext` whenever the user interacts with the page. That's it.
 
 Built for and used on [BitMidi](https://bitmidi.com), a free MIDI database. Works in the browser with [browserify](https://browserify.org/)!
 
@@ -26,9 +26,9 @@ npm install unmute-ios-audio
 ## usage
 
 ```js
-var unmuteAudio = require('unmute-ios-audio')
+const unmuteAudio = require('unmute-ios-audio')
 
-// Call once, at page load time
+// Call once, as early as possible in the page lifecycle
 unmuteAudio()
 ```
 
@@ -36,8 +36,10 @@ unmuteAudio()
 
 ### `unmuteAudio()`
 
+Enable/unmute the WebAudio API on iOS, even while the mute switch is on.
 
+Call this function as early as possible so that the user event handlers can be registered and you don't miss any user interactions which could have been used to unmnute the audio.
 
 ## license
 
-MIT. Copyright (c) [Feross Aboukhadijeh](http://feross.org).
+MIT. Copyright (c) [Feross Aboukhadijeh](https://feross.org).

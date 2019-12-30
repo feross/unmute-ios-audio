@@ -1,76 +1,124 @@
-// Technique inspired by:
-// https://github.com/goldfire/howler.js/issues/753
-// https://stackoverflow.com/questions/21122418/ios-webaudio-only-works-on-headphones/46839941#46839941
-
 module.exports = init
 
-let isHtmlAudioEnabled = false
-let isWebAudioEnabled = false
+const USER_ACTIVATION_EVENTS = [
+  'auxclick',
+  'click',
+  'contextmenu',
+  'dblclick',
+  'keydown',
+  'keyup',
+  'mousedown',
+  'mouseup',
+  'touchend'
+]
 
-let audio
-let context
-let source
+const AudioContext = window.webkitAudioContext
 
-// This will return a seven samples long 8 bit mono WAVE file.
-function createSilentAudioFile (context) {
-  const arrayBuffer = new ArrayBuffer(10)
-  const dataView = new DataView(arrayBuffer)
-
-  dataView.setUint32(0, context.sampleRate, true)
-  dataView.setUint32(4, context.sampleRate, true)
-  dataView.setUint16(8, 1, true)
-
-  const missingCharacters = window.btoa(String.fromCharCode(...new Uint8Array(arrayBuffer))).slice(0, 13)
-
-  return `data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEA${missingCharacters}AgAZGF0YQcAAACAgICAgICAAAA=`
-}
+// To detect iOS, check for iOS user agent (spoofed by many mobile browsers)
+// and confirm Safari-only webkitAudioContext is present.
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && AudioContext != null
 
 function init () {
-  if (window.webkitAudioContext) {
-    context = new window.webkitAudioContext() // eslint-disable-line new-cap
+  if (!IS_IOS) return
 
+  // state can be 'blocked', 'pending', 'allowed'
+  let htmlAudioState = 'blocked'
+  let webAudioState = 'blocked'
+
+  let audio
+  let context
+  let source
+
+  const sampleRate = (new AudioContext()).sampleRate
+  const silentAudioFile = createSilentAudioFile(sampleRate)
+
+  USER_ACTIVATION_EVENTS.forEach(eventName => {
+    window.addEventListener(
+      eventName, handleUserActivation, { capture: true, passive: true }
+    )
+  })
+
+  // Return a seven samples long 8 bit mono WAVE file
+  function createSilentAudioFile (sampleRate) {
+    const arrayBuffer = new ArrayBuffer(10)
+    const dataView = new DataView(arrayBuffer)
+
+    dataView.setUint32(0, sampleRate, true)
+    dataView.setUint32(4, sampleRate, true)
+    dataView.setUint16(8, 1, true)
+
+    const missingCharacters =
+      window.btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        .slice(0, 13)
+
+    return `data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEA${missingCharacters}AgAZGF0YQcAAACAgICAgICAAAA=`
+  }
+
+  function handleUserActivation (e) {
+    if (htmlAudioState === 'blocked') {
+      htmlAudioState = 'pending'
+      createHtmlAudio()
+    }
+    if (webAudioState === 'blocked') {
+      webAudioState = 'pending'
+      createWebAudio()
+    }
+  }
+
+  function createHtmlAudio () {
     audio = document.createElement('audio')
+
+    audio.setAttribute('x-webkit-airplay', 'deny') // Disable the iOS control center media widget
     audio.preload = 'auto'
-    audio.src = createSilentAudioFile(context)
-    audio.addEventListener('ended', handleAudioEnded)
+    audio.loop = true
+    audio.src = silentAudioFile
+    audio.load()
 
-    window.addEventListener('mousedown', handleMousedown)
-  }
-}
+    audio.play().then(
+      () => {
+        htmlAudioState = 'allowed'
+        maybeCleanup()
+      },
+      () => {
+        htmlAudioState = 'blocked'
 
-function handleMousedown () {
-  if (!isHtmlAudioEnabled) {
-    audio.play().catch(() => {})
+        audio.pause()
+        audio.removeAttribute('src')
+        audio.load()
+        audio = null
+      }
+    )
   }
-  if (!isWebAudioEnabled) {
+
+  function createWebAudio () {
+    context = new AudioContext()
+
     source = context.createBufferSource()
     source.buffer = context.createBuffer(1, 1, 22050) // .045 msec of silence
     source.connect(context.destination)
-    source.addEventListener('ended', handleWebAudioEnded)
     source.start()
+
+    if (context.state === 'running') {
+      webAudioState = 'allowed'
+      maybeCleanup()
+    } else {
+      webAudioState = 'blocked'
+
+      source.disconnect(context.destination)
+      source = null
+
+      context.close()
+      context = null
+    }
   }
-}
 
-function handleAudioEnded () {
-  if (isHtmlAudioEnabled) return
-  isHtmlAudioEnabled = true
-  audio.removeEventListener('ended', handleAudioEnded)
-  audio = null
-  maybeCleanup()
-}
+  function maybeCleanup () {
+    if (htmlAudioState !== 'allowed' || webAudioState !== 'allowed') return
 
-function handleWebAudioEnded () {
-  if (isWebAudioEnabled) return
-  isWebAudioEnabled = true
-  source.removeEventListener('ended', handleWebAudioEnded)
-  source.disconnect(context.destination)
-  source = null
-  context.close()
-  context = null
-  maybeCleanup()
-}
-
-function maybeCleanup () {
-  if (!isHtmlAudioEnabled || !isWebAudioEnabled) return
-  window.removeEventListener('mousedown', handleMousedown)
+    USER_ACTIVATION_EVENTS.forEach(eventName => {
+      window.removeEventListener(
+        eventName, handleUserActivation, { capture: true, passive: true }
+      )
+    })
+  }
 }
