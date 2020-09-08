@@ -12,14 +12,14 @@ const USER_ACTIVATION_EVENTS = [
   'touchend'
 ]
 
-const AudioContext = window.webkitAudioContext
-
-// To detect iOS, check for iOS user agent (spoofed by many mobile browsers)
-// and confirm Safari-only webkitAudioContext is present.
-const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) && AudioContext != null
-
 function init () {
-  if (!IS_IOS) return
+  const AudioContext = window.webkitAudioContext
+
+  // To detect iOS, check for iOS user agent (spoofed by many mobile browsers)
+  // and confirm Safari-only webkitAudioContext is present.
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent) && AudioContext != null
+
+  if (!isIos) return
 
   // state can be 'blocked', 'pending', 'allowed'
   let htmlAudioState = 'blocked'
