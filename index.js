@@ -1,4 +1,4 @@
-module.exports = init
+module.exports = unmuteIosAudio
 
 const USER_ACTIVATION_EVENTS = [
   'auxclick',
@@ -12,7 +12,7 @@ const USER_ACTIVATION_EVENTS = [
   'touchend'
 ]
 
-function init () {
+function unmuteIosAudio () {
   const AudioContext = window.webkitAudioContext
 
   // To detect iOS, check for iOS user agent (spoofed by many mobile browsers)
