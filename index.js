@@ -1,3 +1,4 @@
+/*! unmute-ios-audio. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 module.exports = unmuteIosAudio
 
 const USER_ACTIVATION_EVENTS = [
