@@ -18,7 +18,7 @@ function unmuteIosAudio () {
 
   // To detect iOS, check for touch device and confirm Safari-only
   // webkitAudioContext is present.
-  const isIos = navigator.maxTouchPoints > 0 && AudioContext != null
+  const isIos = /(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent) && AudioContext != null
 
   if (!isIos) return
 
