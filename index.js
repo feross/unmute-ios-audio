@@ -10,7 +10,8 @@ const USER_ACTIVATION_EVENTS = [
   'keyup',
   'mousedown',
   'mouseup',
-  'touchend'
+  'touchend',
+  'scroll'
 ]
 
 function unmuteIosAudio () {
