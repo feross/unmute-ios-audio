@@ -95,7 +95,7 @@ function unmuteIosAudio () {
     context = new AudioContext()
 
     source = context.createBufferSource()
-    source.buffer = context.createBuffer(1, 1, 22050) // .045 msec of silence
+    source.buffer = context.createBuffer(1, 1, sampleRate) // 1 / sampleRate seconds duration
     source.connect(context.destination)
     source.start()
 
