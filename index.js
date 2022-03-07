@@ -33,12 +33,6 @@ function unmuteIosAudio () {
   const sampleRate = (new AudioContext()).sampleRate
   const silentAudioFile = createSilentAudioFile(sampleRate)
 
-  USER_ACTIVATION_EVENTS.forEach(eventName => {
-    window.addEventListener(
-      eventName, handleUserActivation, { capture: true, passive: true }
-    )
-  })
-
   // Return a seven samples long 8 bit mono WAVE file
   function createSilentAudioFile (sampleRate) {
     const arrayBuffer = new ArrayBuffer(10)
@@ -55,14 +49,16 @@ function unmuteIosAudio () {
     return `data:audio/wav;base64,UklGRisAAABXQVZFZm10IBAAAAABAAEA${missingCharacters}AgAZGF0YQcAAACAgICAgICAAAA=`
   }
 
-  function handleUserActivation (e) {
-    if (htmlAudioState === 'blocked') {
-      htmlAudioState = 'pending'
-      createHtmlAudio()
-    }
+  function handleUserActivation (resolve, reject, e) {
     if (webAudioState === 'blocked') {
       webAudioState = 'pending'
       createWebAudio()
+    }
+    if (htmlAudioState === 'blocked') {
+      htmlAudioState = 'pending'
+      Promise.all([createHtmlAudio(), context.resume()])
+        .then(() => resolve())
+        .catch(err = reject(err))
     }
   }
 
@@ -75,7 +71,7 @@ function unmuteIosAudio () {
     audio.src = silentAudioFile
     audio.load()
 
-    audio.play().then(
+    return audio.play().then(
       () => {
         htmlAudioState = 'allowed'
         maybeCleanup()
@@ -102,6 +98,7 @@ function unmuteIosAudio () {
     if (context.state === 'running') {
       webAudioState = 'allowed'
       maybeCleanup()
+      return true
     } else {
       webAudioState = 'blocked'
 
@@ -110,6 +107,7 @@ function unmuteIosAudio () {
 
       context.close()
       context = null
+      return false
     }
   }
 
@@ -122,4 +120,12 @@ function unmuteIosAudio () {
       )
     })
   }
+  
+  return new Promise((resole, reject) => {
+    USER_ACTIVATION_EVENTS.forEach(eventName => {
+      window.addEventListener(
+        eventName, handleUserActivation.bind(null, resolve, reject), { capture: true, passive: true }
+      )
+    })
+  })
 }
